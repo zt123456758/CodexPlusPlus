@@ -1,0 +1,27 @@
+name: Release Push Notify
+on:
+  release:
+    types: [published]
+
+jobs:
+  push-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取Release版本与更新内容
+        id: get_release
+        run: |
+          echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          echo "TITLE=${{ github.event.release.name }}" >> $GITHUB_ENV
+          echo "BODY<<EOF" >> $GITHUB_ENV
+          echo "${{ github.event.release.body }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: PushPlus推送更新通知
+        run: |
+          curl -X POST https://www.pushplus.plus/send \
+          -H "Content-Type: application/json" \
+          -d '{
+            "token": "${{ secrets.PUSHPLUS_TOKEN }}",
+            "title": "CodexPlusPlus 新版本发布 ${{ env.VERSION }}",
+            "template": "markdown",
+            "content": "# ${{ env.TITLE }}\n仓库地址：https://github.com/BigPizzaV3/CodexPlusPlus/releases\n\n## 更新日志\n${{ env.BODY }}"
+          }'
